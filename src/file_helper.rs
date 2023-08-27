@@ -61,12 +61,10 @@ pub fn save_response(
     thread_bandwidth: Option<u32>,
 ) -> Result<u64, Error> {
     let content_range: String = (*res.headers().get(CONTENT_RANGE).unwrap().to_str().unwrap()).to_string();
-    let re = Regex::new(r"(?<unit>^[a-zA-Z][\w]*)\s+(?<rangeStart>\d+)\s?-\s?(?<rangeEnd>\d+)?\s?/\s?(?<size>\d+|\*)?").unwrap();
-    let binding;
-    let first_byte = match re.captures(&content_range) {
-        Some(m) => {
-            binding = m["rangeStart"].parse::<u64>();
-            binding.unwrap()
+    let range_regex = Regex::new(r"(?<unit>^[a-zA-Z][\w]*)\s+(?<rangeStart>\d+)\s?-\s?(?<rangeEnd>\d+)?\s?/\s?(?<size>\d+|\*)?").unwrap();
+    let first_byte = match range_regex.captures(&content_range) {
+        Some(matches) => {
+            matches["rangeStart"].parse::<u64>().unwrap()
         },
         None => panic!("Invalid Content-Range header in Response")
     };

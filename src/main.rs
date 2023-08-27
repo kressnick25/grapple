@@ -77,7 +77,7 @@ fn main() {
 
     if thread_count > 20 {
         panic!("Thread count too high, please select between 2 and 20 threads.");
-    } else if thread_count < 2 {
+    } else if thread_count < 1 {
         panic!("Thread count too low, please select between 2 and 20 threads.");
     }
 

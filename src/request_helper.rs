@@ -12,7 +12,7 @@ impl ToString for ByteRangeSpec {
     fn to_string(&self) -> String {
         let ByteRangeSpec::FromTo(from, to) = self;
         format!("bytes={}-{}", from, to)
-    }    
+    }
 }
 
 pub fn head_request(uri: Url) -> Response {

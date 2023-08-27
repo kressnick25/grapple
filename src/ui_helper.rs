@@ -17,8 +17,15 @@ pub fn start_pbr(file_name: &str, lengths: Vec<u64>) {
     build_global_bar(&mut mb, total_length);
     mb.println("");
 
-    for length in lengths {
-        build_child_bar(&mut mb, length);
+    if lengths.len() > 1 {
+        for length in &lengths {
+            build_child_bar(&mut mb, *length);
+        }
+    } else {
+        let mut totals = TOTALS
+            .lock()
+            .expect("Failed to acquire TOTALS lock, lock poisoned!");
+        totals.push(0);
     }
 
     thread::spawn(move || mb.listen());
@@ -28,17 +35,21 @@ pub fn setting_up_bar(bar_idx: usize) {
     let mut pbrs = PBRS
         .lock()
         .expect("Failed to acquire PBRS lock, lock poisoned!");
-    pbrs[bar_idx + 1].message("Starting... ");
-    pbrs[bar_idx + 1].tick();
+    if let Some(bar) = pbrs.get_mut(bar_idx + 1) {
+        bar.message("Starting... ");
+        bar.tick();
+    }
 }
 
 pub fn start_bar(bar_idx: usize) {
     let mut pbrs = PBRS
         .lock()
         .expect("Failed to acquire PBRS lock, lock poisoned!");
-    pbrs[bar_idx + 1].message("");
-    pbrs[bar_idx + 1].show_message = false;
-    pbrs[bar_idx + 1].tick();
+    if let Some(bar) = pbrs.get_mut(bar_idx + 1) {
+        bar.message("");
+        bar.show_message = false;
+        bar.tick();
+    }
 }
 
 pub fn update_bar(bar_idx: usize, progress: u64) {
@@ -49,7 +60,9 @@ pub fn update_bar(bar_idx: usize, progress: u64) {
         .lock()
         .expect("Failed to acquire TOTALS lock, lock poisoned!");
 
-    pbrs[bar_idx + 1].set(progress);
+    if let Some(bar) = pbrs.get_mut(bar_idx + 1) {
+        bar.set(progress);
+    }
     totals[bar_idx] = progress;
 
     let total_progress = totals.iter().sum();
@@ -69,9 +82,12 @@ pub fn fail_bar(bar_idx: usize) {
 }
 
 fn finish_bar_with_message(act_bar: usize, message: &str) {
-    PBRS.lock()
-        .expect("Failed to acquire PBRS lock, lock poisoned!")[act_bar]
-        .finish_print(message);
+    let mut pbrs = PBRS
+        .lock()
+        .expect("Failed to acquire PBRS lock, lock poisoned!");
+    if let Some(bar) = pbrs.get_mut(act_bar) {
+        bar.finish_print(message);
+    }
 }
 
 fn build_global_bar(mb: &mut MultiBar<Stdout>, size: u64) {
